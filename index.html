@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recess Timetable Query Dashboard V1.0.0</title>
+    <script>
+        const timetableData = {
+            "odd": {
+                "09:05-09:40": ["tuesday"],
+                "09:40-10:15": ["monday", "tuesday", "thursday"],
+                "10:15-10:50": ["monday", "tuesday", "friday"],
+                "10:50-11:25": ["monday"],
+                "11:25-12:00": ["wednesday", "thursday", "friday"],
+                "12:00-12:35": ["monday", "wednesday"]
+            },
+            "even": {
+                "09:05-09:40": ["tuesday"],
+                "09:40-10:15": ["friday"],
+                "10:15-10:50": ["monday", "thursday"],
+                "10:50-11:25": ["tuesday", "thursday", "friday"],
+                "11:25-12:00": ["thursday"],
+                "12:00-12:35": ["No Class"]
+            }
+        };
+
+        function updateDays() {
+            const timeframe = document.getElementById('timeframe').value;
+            const weektype = document.getElementById('weektype').value;
+            const daySelect = document.getElementById('day');
+
+            // Clear existing day options
+            daySelect.innerHTML = '';
+
+            // Populate day options based on selected timeframe and weektype
+            if (timetableData[weektype] && timetableData[weektype][timeframe]) {
+                timetableData[weektype][timeframe].forEach(day => {
+                    const option = document.createElement('option');
+                    option.value = day;
+                    option.textContent = day;
+                    daySelect.appendChild(option);
+                });
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('timeframe').addEventListener('change', updateDays);
+            document.getElementById('weektype').addEventListener('change', updateDays);
+        });
+
+        async function queryTimetable(event) {
+            event.preventDefault();
+
+            const timeframe = document.getElementById('timeframe').value;
+            const weektype = document.getElementById('weektype').value;
+            const day = document.getElementById('day').value;
+
+            const response = await fetch('/api/query', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ timeframe, weektype, day })
+            });
+
+            const result = await response.json();
+            const resultContainer = document.getElementById('result');
+
+            if (response.ok) {
+                resultContainer.innerHTML = `<h3>Classes:</h3><ul>${result.map(cls => `<li>${cls}</li>`).join('')}</ul>`;
+            } else {
+                resultContainer.innerHTML = `<p>Error: ${result.error}</p>`;
+            }
+        }
+    </script>
+</head>
+<body>
+    <h1>Recess Timetable Query Dashboard V1.0.0</h1>
+    <a href="https://github.com/gamer50082/SIMC-2.0">Github</a>
+    <h1></h1>
+    <form onsubmit="queryTimetable(event)">
+        <label for="timeframe">TimeFrame:</label>
+        <select id="timeframe" name="timeframe" required>
+            <option value="09:05-09:40">09:05-09:40</option>
+            <option value="09:40-10:15">09:40-10:15</option>
+            <option value="10:15-10:50">10:15-10:50</option>
+            <option value="10:50-11:25">10:50-11:25</option>
+            <option value="11:25-12:00">11:25-12:00</option>
+            <option value="12:00-12:35">12:00-12:35</option>
+        </select>
+        <br><br>
+
+        <label for="weektype">WeekType:</label>
+        <select id="weektype" name="weektype" required>
+            <option value="odd">odd</option>
+            <option value="even">even</option>
+        </select>
+        <br><br>
+
+        <label for="day">Day:</label>
+        <select id="day" name="day" required>
+            <!-- Day options will be populated based on the selected timeframe and weektype -->
+        </select>
+        <br><br>
+
+        <button type="submit">Request</button>
+    </form>
+
+    <div id="result"></div>
+</body>
+</html>
